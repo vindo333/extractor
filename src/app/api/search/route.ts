@@ -3,17 +3,23 @@ import { NextResponse } from 'next/server';
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { query, numResults, location, language } = body; // Add language here
-    
+    const { query, numResults, location, language } = body;
+
     console.log('Received search request:', { query, numResults, location, language });
-    
+
     if (!query) {
       return NextResponse.json({ error: 'Search query is required' }, { status: 400 });
     }
 
-    const apiKey = 'AIzaSyDGEbFVlIP8zorO6deLnOfa-IdWuhIAuFY';
-    const searchEngineId = '504fee02ed2384541';
+    const apiKey = process.env.GOOGLE_API_KEY;
+    const searchEngineId = process.env.GOOGLE_SEARCH_ENGINE_ID;
+
+    if (!apiKey || !searchEngineId) {
+      return NextResponse.json({ error: 'API configuration missing' }, { status: 500 });
+    }
+
     const baseUrl = 'https://www.googleapis.com/customsearch/v1';
+
 
     const results = [];
     const requestsNeeded = Math.ceil(numResults / 10);
