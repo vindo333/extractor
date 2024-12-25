@@ -1,7 +1,10 @@
-import type { NextConfig } from "next";
+import { NextConfig } from 'next';
 
-const nextConfig: NextConfig = {
-  /* config options here */
+const config: NextConfig = {
+  env: {
+    GOOGLE_API_KEY: process.env.GOOGLE_API_KEY!,
+    GOOGLE_SEARCH_ENGINE_ID: process.env.GOOGLE_SEARCH_ENGINE_ID!
+  }
 };
 
-export default nextConfig;
+export default config;
