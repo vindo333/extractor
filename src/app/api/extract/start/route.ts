@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { processWithOpenAI, splitContent, cleanContent } from '../utils';
+import { processWithOpenAI, cleanContent } from '../utils';
 
 export async function POST(req: Request) {
     try {
@@ -14,25 +14,19 @@ export async function POST(req: Request) {
         }
 
         const results = [];
-        
+
         for (const urlObj of urls) {
             try {
                 console.log(`Processing ${urlObj.link}`);
                 const response = await fetch(urlObj.link);
-                
+
                 if (!response.ok) {
                     throw new Error(`Failed to fetch URL: ${response.statusText}`);
                 }
 
                 const html = await response.text();
                 const content = cleanContent(html);
-                const chunks = splitContent(content);
-                const triples = [];
-
-                for (let i = 0; i < chunks.length; i++) {
-                    const chunkTriples = await processWithOpenAI(chunks[i], apiKey, language);
-                    triples.push(...chunkTriples);
-                }
+                const triples = await processWithOpenAI(content, apiKey, language);
 
                 results.push({
                     url: urlObj.link,
@@ -44,15 +38,15 @@ export async function POST(req: Request) {
                 console.error(`Error processing ${urlObj.link}:`, error);
                 results.push({
                     url: urlObj.link,
-                    error: error.message,
+                    error: error instanceof Error ? error.message : 'Unknown error',
                     success: false
                 });
             }
         }
 
-        return NextResponse.json({ 
+        return NextResponse.json({
             success: true,
-            results 
+            results
         });
 
     } catch (error) {
