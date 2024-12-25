@@ -4,21 +4,15 @@ import { processWithOpenAI, cleanContent } from './utils';
 export async function POST(req: Request) {
    try {
        const { urls, apiKey, language } = await req.json();
-       console.log('Starting extraction for URLs:', urls);
 
        if (!urls || !apiKey) {
-           return NextResponse.json(
-               { error: 'Missing required parameters' },
-               { status: 400 }
-           );
+           return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
        }
 
        const results = [];
 
        for (const urlObj of urls) {
            try {
-               console.log(`Fetching ${urlObj.link}...`);
-
                const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(urlObj.link)}`;
                const response = await fetch(proxyUrl, {
                    headers: {
@@ -31,15 +25,10 @@ export async function POST(req: Request) {
                }
 
                const html = await response.text();
-               console.log('Got HTML, length:', html.length);
-
                const headings = cleanContent(html);
-               console.log('Extracted headings:', headings);
 
                if (headings.length > 0) {
                    const triples = await processWithOpenAI(headings, apiKey, language);
-                   console.log('Generated triples:', triples);
-
                    results.push({
                        url: urlObj.link,
                        headings,
@@ -50,11 +39,10 @@ export async function POST(req: Request) {
                    throw new Error('No headings found in page');
                }
 
-           } catch (error: unknown) {
-               console.error(`Error processing ${urlObj.link}:`, error);
+           } catch (error: any) { // Using any to fix the TypeScript error
                results.push({
                    url: urlObj.link,
-                   error: error instanceof Error ? error.message : 'Unknown error occurred',
+                   error: error?.message || 'Unknown error occurred',
                    success: false
                });
            }
@@ -62,14 +50,10 @@ export async function POST(req: Request) {
 
        return NextResponse.json({ success: true, results });
 
-   } catch (error: unknown) {
-       console.error('Extraction failed:', error);
-       return NextResponse.json(
-           { 
-               error: 'Failed to start extraction', 
-               details: error instanceof Error ? error.message : 'Unknown error occurred'
-           },
-           { status: 500 }
-       );
+   } catch (error: any) { // Using any to fix the TypeScript error
+       return NextResponse.json({ 
+           error: 'Failed to start extraction', 
+           details: error?.message || 'Unknown error occurred'
+       }, { status: 500 });
    }
 }
