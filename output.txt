@@ -1,6 +1,5 @@
 .
 ├── README.md
-├── eslint.config.mjs
 ├── next-env.d.ts
 ├── next.config.ts
 ├── output.txt
@@ -27,10 +26,13 @@
 │   │   ├── globals.css
 │   │   ├── layout.tsx
 │   │   └── page.tsx
-│   └── components
-│       ├── ExtractedResults.tsx
-│       └── ExtractionOverlay.tsx
+│   ├── components
+│   │   ├── ExtractedResults.tsx
+│   │   └── ExtractionOverlay.tsx
+│   └── lib
+│       ├── soundUtils.ts
+│       └── stateManager.ts
 ├── tailwind.config.ts
 └── tsconfig.json
 
-9 directories, 25 files
+10 directories, 26 files
