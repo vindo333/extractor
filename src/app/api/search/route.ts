@@ -1,11 +1,59 @@
 import { NextResponse } from 'next/server';
+import { initDB } from '@/lib/db';
+import { createHash } from 'crypto';
+
+interface SearchRequest {
+  query: string;
+  numResults: number;
+  location?: string; 
+  language: string;
+  apiKey: string;
+}
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const { query, numResults, location, language } = body;
+    const body: SearchRequest = await req.json();
+    const { query, numResults, location, language, apiKey: userApiKey } = body;
 
     console.log('Received search request:', { query, numResults, location, language });
+
+    let db;
+    try {
+      db = await initDB();
+      const keyHash = createHash('sha256').update(userApiKey).digest('hex');
+      
+      // Check if user is blocked
+      const blocked = await db.get(
+        'SELECT COUNT(*) as count FROM blocked_keys WHERE api_key_hash = ?',
+        [keyHash]
+      );
+
+      if (blocked?.count > 0) {
+        return NextResponse.json({ 
+          error: 'This API key has been blocked. Please contact support.' 
+        }, { status: 403 });
+      }
+
+      // Log the usage
+      await db.run(
+        'INSERT INTO usage (api_key_hash, query, timestamp) VALUES (?, ?, datetime("now"))',
+        [keyHash, query]
+      );
+
+      // Get today's usage count
+      const todayUsage = await db.get(
+        `SELECT COUNT(*) as count FROM usage 
+         WHERE api_key_hash = ? 
+         AND date(timestamp) = date('now')`,
+        [keyHash]
+      );
+
+      console.log(`Today's usage for ${keyHash}: ${todayUsage.count}`);
+
+    } catch (dbError) {
+      console.error('Failed to log usage:', dbError);
+      // Continue with search even if logging fails
+    }
 
     if (!query) {
       return NextResponse.json({ error: 'Search query is required' }, { status: 400 });
@@ -19,8 +67,7 @@ export async function POST(req: Request) {
     }
 
     const baseUrl = 'https://www.googleapis.com/customsearch/v1';
-
-
+    
     const results = [];
     const requestsNeeded = Math.ceil(numResults / 10);
 
@@ -34,8 +81,8 @@ export async function POST(req: Request) {
       url.searchParams.append('q', location ? `${query} ${location}` : query);
       url.searchParams.append('num', String(currentNum));
       url.searchParams.append('start', String(startIndex));
-      url.searchParams.append('lr', `lang_${language}`); // Add language filter
-      url.searchParams.append('hl', language); // Add interface language
+      url.searchParams.append('lr', `lang_${language}`);
+      url.searchParams.append('hl', language);
 
       console.log('Fetching from URL:', url.toString());
 
@@ -64,9 +111,8 @@ export async function POST(req: Request) {
     }, { status: 500 });
   }
 }
-// Helper functions for content extraction
+
 function extractContent(html: string): string {
-  // Basic content extraction - we'll improve this later
   const textMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
   if (!textMatch) return '';
   

@@ -229,18 +229,26 @@ export default function Home() {
   return (
     <main className="h-[580px] overflow-y-auto bg-gray-50 p-4">
       <div className="space-y-4 bg-white p-4 rounded-lg shadow-sm">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-2">
-          <h1 className="text-lg font-bold text-gray-800">
-            Information Gain
-          </h1>
-          <button
-            onClick={handleReset}
-            className="px-2 py-1 text-xs bg-gray-100 rounded hover:bg-gray-200"
-          >
-            Reset
-          </button>
-        </div>
+        {/* Header buttons */}
+<div className="flex justify-between items-center mb-2">
+  <h1 className="text-lg font-bold text-gray-800 dark:text-gray-100">
+    Information Gain
+  </h1>
+  <div className="flex space-x-2">
+    <a
+      href="/usage"
+      className="px-2 py-1 text-xs bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+    >
+      Usage Stats
+    </a>
+    <button
+      onClick={handleReset}
+      className="px-2 py-1 text-xs bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+    >
+      Reset
+    </button>
+  </div>
+</div>
   
         {/* Form */}
         <form onSubmit={handleSearch} className="space-y-3">
@@ -402,5 +410,6 @@ export default function Home() {
           />
         )}
       </div>
+      
     </main>
   )}
